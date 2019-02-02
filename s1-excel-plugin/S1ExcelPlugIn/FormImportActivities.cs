@@ -105,7 +105,7 @@ namespace S1ExcelPlugIn
                 string server = crypto.GetSettings("ExcelPlugIn", "ManagementServer");
                 string server2 = server.Substring(server.LastIndexOf('/') + 1);
                 string username = crypto.GetSettings("ExcelPlugIn", "Username");
-                string resourceString = server + "/web/api/v1.6/activities/types";
+                string resourceString = server + "/web/api/v2.0/activities/types";
 
                 var restClient = new RestClientInterface(resourceString);
                 restClient.Method = HttpVerb.GET;
@@ -291,7 +291,7 @@ namespace S1ExcelPlugIn
                 // Clear spreadsheet
                 eHelper.Clear();
                 #endregion
-
+                
                 #region Get Data
 
                 #region Get data from server
@@ -303,7 +303,7 @@ namespace S1ExcelPlugIn
                 string created_at__lte = "";
                 string created_at__gte = "";
                 string daterange = "";
-                string activity_type = "&activity_type__in=";
+                string activity_type = "&activityTypes=";
 
                 int MaxRecords = 1000000;
                 if (checkBoxRecordLimit.Checked)
@@ -342,8 +342,8 @@ namespace S1ExcelPlugIn
                 }
                 else
                 {
-                    created_at__gte = "created_at__gte=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerStart.Value).ToString();
-                    created_at__lte = "created_at__lte=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerEnd.Value.AddDays(1)).ToString();
+                    created_at__gte = "createdAt__gt=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerStart.Value).ToString();
+                    created_at__lte = "createdAt__lt=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerEnd.Value.AddDays(1)).ToString();
                     daterange = "&" + created_at__lte + "&" + created_at__gte;
                 }
 
@@ -380,26 +380,31 @@ namespace S1ExcelPlugIn
                 this.ShowInTaskbar = false;
 
                 stopWatch.Start();
-
+                string cursor = "";
                 while (Gogo)
                 {
-                    resourceString = mgmtServer + "/web/api/v1.6/activities?" + limit + skip + skip_count.ToString() + daterange + activity_type;
+                    //resourceString = mgmtServer + "/web/api/v2.0/activities?" + limit + skip + skip_count.ToString() + daterange + activity_type;
+                    resourceString = mgmtServer + "/web/api/v2.0/activities?" + limit + daterange + activity_type + cursor;
                     restClient.EndPoint = resourceString;
                     restClient.Method = HttpVerb.GET;
-                    var batch_string = restClient.MakeRequest(token).ToString();
+                    var batch_string = restClient.MakeRequest(token, false).ToString();
                     threats = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
-                    rowCountTemp = (int)threats.Count;
+                    rowCountTemp = (int)threats.data.Count;
                     skip_count = skip_count + BatchRecords;
-                    results = results + ", " + batch_string.TrimStart('[').TrimEnd(']', '\r', '\n');
+                    cursor = "&cursor=" + threats.pagination.nextCursor;
+                    results = results + ", " + threats.data.ToString().TrimStart('[').TrimEnd(']', '\r', '\n');
                     rowCount = rowCount + rowCountTemp;
+
+                    if (threats.pagination.nextCursor == null)
+                        Gogo = false;
 
                     if (rowCountTemp < BatchRecords || rowCount >= MaxRecords)
                         Gogo = false;
 
-                    if ((MaxRecords - rowCount) < BatchRecords)
-                    {
-                        limit = "limit=" + (MaxRecords - rowCount).ToString();
-                    }
+                    //if ((MaxRecords - rowCount) < BatchRecords)
+                    //{
+                    //    limit = "limit=" + (MaxRecords - rowCount).ToString();
+                    //}
 
                     formMsg.UpdateMessage("Loading activity data: " + rowCount.ToString("N0"),
                             eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed");
@@ -513,7 +518,7 @@ namespace S1ExcelPlugIn
                 #endregion
 
                 #endregion
-
+                
                 #region Create Headings
                 // Create headings
                 // =================================================================================================================

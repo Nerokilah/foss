@@ -18,7 +18,7 @@
     </UpgradeBackupLocation>
     <StartupObject>
     </StartupObject>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>S1ExcelPlugIn.pfx</AssemblyOriginatorKeyFile>
     <IsWebBootstrapper>true</IsWebBootstrapper>
     <ApplicationIcon>Excel.ico</ApplicationIcon>
@@ -128,8 +128,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="Loader\adxloader.dll.manifest" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Loader\adxloader.dll.manifest">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

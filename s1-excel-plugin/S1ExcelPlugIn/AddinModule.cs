@@ -354,6 +354,9 @@ namespace S1ExcelPlugIn
             // 
             // adxRibbonButtonProcesses
             // 
+            // -------------------------------------------------------------------------------
+            // | /!\ --> This feature is obsolete and an empty array will always be returned |
+            // -------------------------------------------------------------------------------
             this.adxRibbonButtonProcesses.Caption = "Import Process Data";
             this.adxRibbonButtonProcesses.Description = "Import Process Data";
             this.adxRibbonButtonProcesses.Id = "adxRibbonButton_fac704f8e6f948118185425531ae3e4d";
@@ -555,6 +558,8 @@ namespace S1ExcelPlugIn
 
         private void GetPolicyData()
         {
+            MessageBox.Show("This feature is obsolete and notavailable in v2.0");
+            return;
             try
             {
                 FormImportAnyObjects formImportObjectsWin = new FormImportAnyObjects();
@@ -836,25 +841,27 @@ namespace S1ExcelPlugIn
                 server = server.TrimEnd('/');
                 server2 = server.Substring(server.LastIndexOf('/') + 1);
                 username = crypto.GetSettings("ExcelPlugIn", "Username");
-                string resourceString = server + "/web/api/v1.6/info";
+                string resourceString = server + "/web/api/v2.0/system/info";
                 var restClient = new RestClientInterface(resourceString);
                 restClient.Method = HttpVerb.GET;
                 restClient.PostData = "";
                 var results = restClient.MakeRequest(token).ToString();
 
                 dynamic x = Newtonsoft.Json.JsonConvert.DeserializeObject(results);
-                string version = x.version;
+                string release = x.release;
                 string build = x.build;
-                Globals.ServerVersion = version;
+                string version = x.version;
+                Globals.ServerVersion = release;
+
 
                 if (adxRibbonLabel1.Caption != "Logged in as " + username ||
                     adxRibbonLabel2.Caption != "On server " + server2 ||
-                    adxRibbonLabel3.Caption != "Version " + version + " " + build
+                    adxRibbonLabel3.Caption != "Release " + release + " version " + version + " build " + build
                     )
                 {
                     adxRibbonLabel1.Caption = "Logged in as " + username;
                     adxRibbonLabel2.Caption = "On server " + server2;
-                    adxRibbonLabel3.Caption = "Version " + version + " " + build;
+                    adxRibbonLabel3.Caption = "Release " + release + " version " + version + " build " + build;
                     SwitchedUser = true;
                 }
 
@@ -931,7 +938,6 @@ namespace S1ExcelPlugIn
 
         private void CacheAllTables()
         {
-
             try
             {
                 if (ReferenceDataCached == true)
@@ -956,20 +962,19 @@ namespace S1ExcelPlugIn
             catch {}
 
             FindNumberOfAgents();
-
             CacheLookupTables("groups", 25);
 
             CacheLookupTables("activities/types", 1);
             CacheLookupTables("agents", 6);
             CacheLookupTables("users", 15);
-            CacheLookupTables("policies", 20);
+            CacheLookupTables("private/policy", 20);
 
             // activeWorkSheet.Visible = Excel.XlSheetVisibility.xlSheetHidden;
         }
 
         private int FindNumberOfAgents()
         {
-            string resourceString = server + "/web/api/v1.6/agents/count";
+            string resourceString = server + "/web/api/v2.0/agents/count";
             var restClient = new RestClientInterface(resourceString);
             restClient.Method = HttpVerb.GET;
             var results = restClient.MakeRequest(token).ToString();
@@ -979,7 +984,7 @@ namespace S1ExcelPlugIn
                 MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
             };
             dynamic agentResults = Newtonsoft.Json.JsonConvert.DeserializeObject(results, JsonSettings);
-            int agentCount = Convert.ToInt32(agentResults.count);
+            int agentCount = Convert.ToInt32(agentResults.total);
             Globals.TotalAgents = agentCount;
             return agentCount;
         }
@@ -1037,8 +1042,8 @@ namespace S1ExcelPlugIn
                     #region Agents for v2 and above
                     string limit = "limit=" + Globals.ApiBatch.ToString();
                     bool Gogo = true;
-                    string last_id = "";
-                    int skip_count = 0;
+                    string cursor = "";
+                    //int skip_count = 0;
                     dynamic agents = "";
                     dynamic agentsIterate = "";
                     int rowCountTemp = 0;
@@ -1051,21 +1056,22 @@ namespace S1ExcelPlugIn
 
                     while (Gogo)
                     {
-                        resourceString = server + "/web/api/v1.6/agents/iterator?" + limit + last_id;
+                        resourceString = server + "/web/api/v2.0/agents?" + limit + cursor;
                         restClient.EndPoint = resourceString;
                         restClient.Method = HttpVerb.GET;
-                        var res = restClient.MakeRequest(token).ToString();
+                        var res = restClient.MakeRequest(token, false).ToString();
                         agentsIterate = Newtonsoft.Json.JsonConvert.DeserializeObject(res, JsonSettings);
+
                         rowCountTemp = (int)agentsIterate.data.Count;
                         agents = agentsIterate.data;
-                        last_id = "&last_id=" + agentsIterate.last_id;
-                        skip_count = skip_count + Globals.ApiBatch;
+                        cursor = "&cursor=" + agentsIterate.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
 
                         results.Append(agents.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
 
                         rowCount = rowCount + rowCountTemp;
 
-                        if (agentsIterate.last_id == null)
+                        if (agentsIterate.pagination.nextCursor == null)
                             Gogo = false;
 
                         percentComplete = (int)Math.Round((double)(100 * rowCount) / Globals.TotalAgents);
@@ -1148,9 +1154,9 @@ namespace S1ExcelPlugIn
                     ReferenceDataCached = true;
                     #endregion
                 }
-                else if (resource == "groups")
+                else if (resource == "groups" || resource == "private/policy")
                 {
-                    resourceString = server + "/web/api/v1.6/" + resource;
+                    resourceString = server + "/web/api/v2.0/" + resource;
                     restClient.EndPoint = resourceString;
                     var res = restClient.MakeRequest(token).ToString();
                     results.Clear();
@@ -1158,7 +1164,7 @@ namespace S1ExcelPlugIn
                 }
                 else
                 {
-                    resourceString = server + "/web/api/v1.6/" + resource + "?limit=1000000";
+                    resourceString = server + "/web/api/v2.0/" + resource + "?limit=100";
                     restClient.EndPoint = resourceString;
                     var res = restClient.MakeRequest(token).ToString();
                     results.Clear();
@@ -1166,10 +1172,13 @@ namespace S1ExcelPlugIn
                 }
 
                 dynamic x = Newtonsoft.Json.JsonConvert.DeserializeObject(results.ToString(), JsonSettings);
-                rowCount = (int)x.Count;
+                dynamic tmp = x.Count;
+                if (tmp == null)
+                    rowCount = 0;
+                else
+                    rowCount = (int)x.Count;
 
                 string[,] dataBlock = new string[rowCount, colCount];
-
                 if (resource == "activities/types")
                 {
                     for (int i = 0; i < rowCount; i++)
@@ -1190,11 +1199,11 @@ namespace S1ExcelPlugIn
                     for (int i = 0; i < rowCount; i++)
                     {
                         dataBlock[i, 0] = (x[i].id == null) ? "null" : x[i].id.ToString();
-                        dataBlock[i, 1] = (x[i].network_information.computer_name == null) ? "null" : x[i].network_information.computer_name.ToString();
-                        dataBlock[i, 2] = (x[i].software_information.os_name == null) ? "[Not Available]" : x[i].software_information.os_name.ToString();
+                        dataBlock[i, 1] = (x[i].computerName == null) ? "null" : x[i].computerName.ToString();
+                        dataBlock[i, 2] = (x[i].osName == null) ? "[Not Available]" : x[i].osName.ToString();
 
-                        dataBlock[i, 3] = (x[i].last_logged_in_user_name == null) ? "[Not Available]" : x[i].last_logged_in_user_name.ToString();
-                        dataBlock[i, 4] = (x[i].group_id == null) ? "[Not Available]" : x[i].group_id.ToString();
+                        dataBlock[i, 3] = (x[i].lastLoggedInUserName == null) ? "[Not Available]" : x[i].lastLoggedInUserName.ToString();
+                        dataBlock[i, 4] = (x[i].groupId == null) ? "[Not Available]" : x[i].groupId.ToString();
                         activeWorkSheet.Cells[i+5, col+5].Formula =
                             "=IFERROR(VLOOKUP(" + eHelper.ExcelColumnLetter(9) + (i + 5).ToString() + ",'Lookup Tables'!Y4:Z" + (Globals.GroupRowCount + 4).ToString() + ",2,FALSE),\"[Not Available]\")";
                     }
@@ -1216,7 +1225,7 @@ namespace S1ExcelPlugIn
                     for (int i = 0; i < rowCount; i++)
                     {
                         dataBlock[i, 0] = (x[i].id == null) ? "null" : x[i].id.ToString();
-                        dataBlock[i, 1] = (x[i].full_name == null) ? "null" : x[i].full_name.ToString();
+                        dataBlock[i, 1] = (x[i].full_name == null) ? "null" : x[i].fullName.ToString();
                     }
 
                     activeWorkSheet.Cells[1, col] = resource;
@@ -1225,7 +1234,7 @@ namespace S1ExcelPlugIn
                     activeWorkSheet.Cells[4, col] = "ID";
                     activeWorkSheet.Cells[4, col + 1] = "Full Name";
                 }
-                else if (resource == "policies" || resource == "groups")
+                else if (resource == "private/policy" || resource == "groups")
                 {
                     if (resource == "groups")
                         Globals.GroupRowCount = rowCount;
@@ -1235,7 +1244,6 @@ namespace S1ExcelPlugIn
                         dataBlock[i, 0] = (x[i].id == null) ? "null" : x[i].id.ToString();
                         dataBlock[i, 1] = (x[i].name == null) ? "null" : x[i].name.ToString();
                     }
-
                     activeWorkSheet.Cells[1, col] = resource;
                     activeWorkSheet.Cells[2, col] = colCount.ToString();
                     activeWorkSheet.Cells[3, col] = rowCount.ToString();
@@ -1461,7 +1469,7 @@ namespace S1ExcelPlugIn
         public static int AgentRowCount = 0;
         public static bool UnresolvedThreatOnly = false;
 
-        public static int ApiBatch = 500;
+        public static int ApiBatch = 100;
         public static int PassphraseBatch = 50;
         public static int ApplicationBatch = 20;
         public static int ProcessBatch = 20;

@@ -92,22 +92,23 @@ namespace S1ExcelPlugIn
 
         private void buttonImportData_Click(object sender, EventArgs e)
         {
-            GetData();
+            MessageBox.Show("This feature is obsolete and not available in v2.0");
+            //GetData();
             Close();
         }
 
         private void buttonImportAndGenerate_Click(object sender, EventArgs e)
         {
+            MessageBox.Show("This feature is obsolete and not available in v2.0");
+            //GetData();
 
-            GetData();
+            //formMsg.Message("Creating pivot tables and charts for the process data...", "", allowCancel: false);
 
-            formMsg.Message("Creating pivot tables and charts for the process data...", "", allowCancel: false);
+            //(ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ScreenUpdating = false;
+            //GenerateReport();
+            //(ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ScreenUpdating = true;
 
-            (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ScreenUpdating = false;
-            GenerateReport();
-            (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ScreenUpdating = true;
-
-            formMsg.Hide();
+            //formMsg.Hide();
 
             Close();
         }
@@ -116,6 +117,8 @@ namespace S1ExcelPlugIn
 
         public void GetData()
         {
+            MessageBox.Show("This feature is obsolete and not available in v2.0");
+            return;
             try
             {
                 #region Create worksheet
@@ -184,7 +187,7 @@ namespace S1ExcelPlugIn
 
                 for (int i = 1; i <= AgentArrayItems; i++)
                 {
-                    resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i,1).ToString() + "/processes";
+                    resourceString = mgmtServer + "/web/api/v2.0/agents/processes?ids=" + AgentArray.GetValue(i, 1).ToString();
 
                     Globals.ApiUrl = resourceString;
                     restClient.EndPoint = resourceString;

@@ -96,10 +96,7 @@ namespace S1ExcelPlugIn
 
         private void buttonImportAndGenerate_Click(object sender, EventArgs e)
         {
-
             GetData();
-
-
             Close();
         }
 
@@ -151,11 +148,10 @@ namespace S1ExcelPlugIn
                 else
                 {
                 }
-
                 string limit = "limit=" + Globals.ApiBatch.ToString();
                 bool Gogo = true;
                 string skip = "&skip=";
-                string last_id = "";
+                string cursor = "";
                 int skip_count = 0;
                 StringBuilder results = new StringBuilder("[");
                 int maxColumnWidth = 80;
@@ -218,21 +214,21 @@ namespace S1ExcelPlugIn
                     #region v2 API using iterator
                     while (Gogo)
                     {
-                        resourceString = mgmtServer + "/web/api/v1.6/agents/iterator?" + limit + last_id + query;
+                        resourceString = mgmtServer + "/web/api/v2.0/agents?" + limit + cursor + query;
                         restClient.EndPoint = resourceString;
                         restClient.Method = HttpVerb.GET;
-                        var res = restClient.MakeRequest(token).ToString();
+                        var res = restClient.MakeRequest(token, false).ToString();
                         agentsIterate = Newtonsoft.Json.JsonConvert.DeserializeObject(res, JsonSettings);
                         rowCountTemp = (int)agentsIterate.data.Count;
                         agents = agentsIterate.data;
-                        last_id = "&last_id=" + agentsIterate.last_id;
-                        skip_count = skip_count + Globals.ApiBatch;
+                        cursor = "&cursor=" + agentsIterate.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
 
                         results.Append(agents.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
 
                         rowCount = rowCount + rowCountTemp;
 
-                        if (agentsIterate.last_id == null)
+                        if (agentsIterate.pagination.nextCursor == null)
                             Gogo = false;
 
                         percentComplete = (int)Math.Round((double)(100 * rowCount) / Globals.TotalAgents);
@@ -297,7 +293,7 @@ namespace S1ExcelPlugIn
                                     AddFormatter(AttribNo-1, dataType, Level1.Key + "." + Level2.Key + "." + Level3.Key);
                                 }
                             }
-                            else if (dataType == "Array" && Level1.Key == "network_information")
+                            else if (dataType == "Array" && Level1.Key == "networkInterfaces")
                             {
                                 AttribCollection.Insert(AttribNo, new KeyValuePair<string, string>(Level1.Key + "." + Level2.Key, dataType));
                                 AttribNo++;
@@ -327,7 +323,7 @@ namespace S1ExcelPlugIn
                         AttribCollection.Insert(AttribNo, new KeyValuePair<string, string>(Level1.Key + "." + "asset_version", "String"));
                         AttribNo++;
                     }
-                    else if (Level1.Key == "group_id")
+                    else if (Level1.Key == "groupId")
                     {
                         AttribCollection.Insert(AttribNo, new KeyValuePair<string, string>(Level1.Key, dataType));
                         AttribNo++;
@@ -371,9 +367,9 @@ namespace S1ExcelPlugIn
 
                 string[] prop;
                 string header0 = "";
-                string[] ip_interfaces;
-                bool byPass2 = false;
-                bool byPass3 = false;
+                //string[] ip_interfaces;
+                //bool byPass2 = false;
+                //bool byPass3 = false;
 
                 Excel.Worksheet lookupSheet = (Excel.Worksheet)(ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.Worksheets.get_Item("Lookup Tables");
                 int rows = Convert.ToInt32(lookupSheet.Cells[3, 25].Value) + 4;
@@ -382,8 +378,8 @@ namespace S1ExcelPlugIn
 
                 for (int i = 0; i < rowCount; i++)
                 {
-                    byPass2 = false;
-                    byPass3 = false;
+                    //byPass2 = false;
+                    //byPass3 = false;
 
                     for (int j = 0; j < AttribCollection.Count; j++)
                     {
@@ -704,8 +700,8 @@ namespace S1ExcelPlugIn
                 // Chart 1 =========================================================================================
                 NextPivotRow = 5;
                 NextChartOffet = 80;
-                eHelper.CreatePivot("Agent Data", colCount, rowCount, "'Agent Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableOs", "Software Information.Os Name", "Operating System", "ID", "OS Count");
+                eHelper.CreatePivot("Agent Data", colCount, rowCount, "'Agent Reports'!R" + NextPivotRow.ToString() + "C11",
+                                    "PivotTableOs", "Osname", "Operating System", "ID", "OS Count");
                 eHelper.CreateChart("PivotTableOs", NextChartOffet, "Agent Operating Systems");
 
 
@@ -736,7 +732,7 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Agent Data", colCount, rowCount, "'Agent Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableAgent", "Agent Version", "Agent Version", "ID", "Version Count");
+                                    "PivotTableAgent", "Agentversion", "Agent Version", "ID", "Version Count");
                 eHelper.CreateChart("PivotTableAgent", NextChartOffet, "Agent Versions");
 
                 // Chart 3 =========================================================================================
@@ -766,7 +762,7 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Agent Data", colCount, rowCount, "'Agent Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableIsActive", "Is Active", "Is Active", "ID", "Active Count");
+                                    "PivotTableIsActive", "Isactive", "Is Active", "ID", "Active Count");
                 eHelper.CreateChart("PivotTableIsActive", NextChartOffet, "Agents Currently Active");
 
                 // Chart 4 =========================================================================================

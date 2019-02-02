@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Data.Entity.Design.PluralizationServices;
 using System.Diagnostics;
 using System.Text;
+using System.IO;
 
 namespace S1ExcelPlugIn
 {
@@ -160,15 +161,12 @@ namespace S1ExcelPlugIn
                 string token = crypto.Decrypt(crypto.GetSettings("ExcelPlugIn", "Token"));
 
                 string limit = "limit=" + Globals.ApiBatch.ToString();
-                bool Gogo = true;
-                string skip = "&skip=";
-                int skip_count = 0;
+                string cursor = "";
                 StringBuilder results = new StringBuilder("[");
                 int maxColumnWidth = 80;
                 dynamic res = "";
                 int rowCountTemp = 0;
                 stopWatch.Start();
-
                 var JsonSettings = new Newtonsoft.Json.JsonSerializerSettings
                 {
                     NullValueHandling = Newtonsoft.Json.NullValueHandling.Include,
@@ -185,8 +183,16 @@ namespace S1ExcelPlugIn
 
                 var restClient = new RestClientInterface();
 
+                #region Agent Configuration
+                if (selectedObject == "Agents/Configuration")
+                {
+                    MessageBox.Show("This feature is obsolete and not available in v2.0");
+                    return;
+                }
+                #endregion
+
                 #region Agent Passphrase
-                if (selectedObject == "Agents/Passphrase" || selectedObject == "Agents/Configuration")
+                if (selectedObject == "Agents/Passphrase")
                 {
                     #region Find All the Agents from the hidden Lookup Table sheet
                     Excel.Worksheet lookupSheet = (Excel.Worksheet)(ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.Worksheets.get_Item("Lookup Tables");
@@ -202,14 +208,15 @@ namespace S1ExcelPlugIn
                     for (int i = 1; i <= AgentArrayItems; i++)
                     {
                         // resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + "/passphrase";
-                        resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + selectedObject.ToLower().Substring(selectedObject.IndexOf("/"));
+                        // resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + selectedObject.ToLower().Substring(selectedObject.IndexOf("/"));
+                        resourceString = mgmtServer + "/web/api/v2.0/agents/passphrases";
                         restClient.EndPoint = resourceString;
                         restClient.Method = HttpVerb.GET;
                         var batch_string = restClient.MakeRequest(token).ToString();
-                        batch_string = batch_string.Replace("\"configuration\": \"", "\"configuration\": ");
-                        batch_string = batch_string.Replace("\\\"", "\"");
-                        batch_string = batch_string.Replace("\\\\\\\\", "\\\\");
-                        batch_string = batch_string.Replace("}\", \"updated_at\"", "}, \"updated_at\"");
+                        //batch_string = batch_string.Replace("\"configuration\": \"", "\"configuration\": ");
+                        //batch_string = batch_string.Replace("\\\"", "\"");
+                        //batch_string = batch_string.Replace("\\\\\\\\", "\\\\");
+                        //batch_string = batch_string.Replace("}\", \"updated_at\"", "}, \"updated_at\"");
 
                         int percentComplete = 0;
 
@@ -224,19 +231,28 @@ namespace S1ExcelPlugIn
                                 return;
                             }
                         }
+                        //MessageBox.Show("Test");
+                        //JObject oneAgent = JObject.Parse(batch_string);
 
-                        JObject oneAgent = JObject.Parse(batch_string);
+                        //var PropertyComputerName = new JProperty("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
+                        //MessageBox.Show("Test");
+                        //var PropertyOperatingSystem = new JProperty("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
+                        //MessageBox.Show("Test");
 
-                        var PropertyComputerName = new JProperty("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
-                        var PropertyOperatingSystem = new JProperty("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
+                        //oneAgent.AddFirst(PropertyOperatingSystem);
+                        //MessageBox.Show("Test");
+                        //oneAgent.AddFirst(PropertyComputerName);
+                        //MessageBox.Show("Test");
 
-                        oneAgent.AddFirst(PropertyOperatingSystem);
-                        oneAgent.AddFirst(PropertyComputerName);
+                        //// oneAgent.Add("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
+                        //// oneAgent.Add("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
 
-                        // oneAgent.Add("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
-                        // oneAgent.Add("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
+                        //results.Append(oneAgent.ToString()).Append(",");
+                        //MessageBox.Show("Test");
+                        //rowCount++;
+                        //MessageBox.Show("Test");
 
-                        results.Append(oneAgent.ToString()).Append(",");
+                        results.Append(batch_string.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
                         rowCount++;
                     }
 
@@ -244,38 +260,156 @@ namespace S1ExcelPlugIn
                 }
                 #endregion
 
+                #region Groups
                 else if (selectedObject == "Groups")
                 {
-                    resourceString = mgmtServer + "/web/api/v1.6/" + selectedObject.ToLower();
+                    bool Gogo_groups = true;
+                    dynamic groups = "";
+
+                    while (Gogo_groups)
+                    {
+                        resourceString = mgmtServer + "/web/api/v2.0/" + selectedObject.ToLower() + "?" + limit + cursor;
+                        restClient.EndPoint = resourceString;
+                        restClient.Method = HttpVerb.GET;
+                        var batch_string = restClient.MakeRequest(token, false).ToString();
+                        res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                        rowCountTemp = (int)res.data.Count;
+                        groups = res.data;
+                        cursor = "&cursor=" + res.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
+                        results.Append(groups.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+
+                        rowCount = rowCount + rowCountTemp;
+
+                        if (res.pagination.nextCursor == null)
+                            Gogo_groups = false;
+                    }
+                }
+                #endregion
+
+                #region Hashes
+                else if (selectedObject == "Hashes")
+                {
+                    bool Gogo_hash = true;
+                    dynamic hash = "";
+
+                    while (Gogo_hash)
+                    {
+                        resourceString = mgmtServer + "/web/api/v2.0/restrictions?type=black_hash&" + limit + cursor;
+                        restClient.EndPoint = resourceString;
+                        restClient.Method = HttpVerb.GET;
+                        var batch_string = restClient.MakeRequest(token, false).ToString();
+                        res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                        rowCountTemp = (int)res.data.Count;
+                        hash = res.data;
+                        cursor = "&cursor=" + res.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
+                        results.Append(hash.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+
+                        rowCount = rowCount + rowCountTemp;
+
+                        if (res.pagination.nextCursor == null)
+                            Gogo_hash = false;
+                    }
+                    Gogo_hash = true;
+                    while (Gogo_hash)
+                    {
+                        resourceString = mgmtServer + "/web/api/v2.0/exclusions?type=white_hash&" + limit + cursor;
+                        restClient.EndPoint = resourceString;
+                        restClient.Method = HttpVerb.GET;
+                        var batch_string = restClient.MakeRequest(token, false).ToString();
+                        res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                        rowCountTemp = (int)res.data.Count;
+                        hash = res.data;
+                        cursor = "&cursor=" + res.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
+                        results.Append(hash.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+
+                        rowCount = rowCount + rowCountTemp;
+
+                        if (res.pagination.nextCursor == null)
+                            Gogo_hash = false;
+                    }
+                }
+                #endregion
+
+                #region Activities/Types
+                else if (selectedObject == "Activities/Types")
+                {
+                    resourceString = mgmtServer + "/web/api/v2.0/activities/types";
                     restClient.EndPoint = resourceString;
                     restClient.Method = HttpVerb.GET;
                     var batch_string = restClient.MakeRequest(token).ToString();
-                    res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
-                    rowCountTemp = (int)res.Count;
-                    skip_count = skip_count + Globals.ApiBatch;
                     results.Append(batch_string.TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
-
-                    rowCount = rowCount + rowCountTemp;
                 }
+                #endregion
+
+                #region Activities/Types
+                else if (selectedObject == "Reports")
+                {
+                    bool Gogo_reports = true;
+                    dynamic reports = "";
+                    int percentComplete = 0;
+
+                    while (Gogo_reports)
+                    {
+                        resourceString = mgmtServer + "/web/api/v2.0/reports?" + cursor;
+                        restClient.EndPoint = resourceString;
+                        restClient.Method = HttpVerb.GET;
+                        var batch_string = restClient.MakeRequest(token, false).ToString();
+                        res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                        rowCountTemp = (int)res.data.Count;
+                        reports = res.data;
+                        cursor = "&cursor=" + res.pagination.nextCursor;
+                        string path = @"C:\Users\Public\WriteLines.txt";
+                        using (StreamWriter sw = File.AppendText(path))
+                        {
+                            sw.WriteLine(cursor);
+                        }
+                        //skip_count = skip_count + Globals.ApiBatch;
+                        results.Append(reports.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+
+                        rowCount = rowCount + rowCountTemp;
+
+                        percentComplete = (int)Math.Round((double)(100 * rowCount) / (int)res.pagination.totalItems);
+                        formMsg.Message("Iterating data for " + rowCount.ToString("N0") + " of " + res.pagination.totalItems.ToString("N0") + " reports for reference (" + percentComplete.ToString() + "%)...",
+                               eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed", allowCancel: true);
+                        if (formMsg.StopProcessing == true)
+                        {
+                            formMsg.Hide();
+                            return;
+                        }
+                        if (res.pagination.nextCursor == null)
+                            Gogo_reports = false;
+                    }
+                }
+                #endregion
 
                 #region All other objects
                 else
                 {
-                    while (Gogo)
+                    bool Gogo_other = true;
+                    dynamic other = "";
+                    while (Gogo_other)
                     {
-                        resourceString = mgmtServer + "/web/api/v1.6/" + selectedObject.ToLower() + "?" + limit + skip + skip_count.ToString();
+                        resourceString = mgmtServer + "/web/api/v2.0/" + selectedObject.ToLower() + "?" + limit + cursor;
                         restClient.EndPoint = resourceString;
                         restClient.Method = HttpVerb.GET;
-                        var batch_string = restClient.MakeRequest(token).ToString();
+                        var batch_string = restClient.MakeRequest(token, false).ToString();
                         res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
-                        rowCountTemp = (int)res.Count;
-                        skip_count = skip_count + Globals.ApiBatch;
-                        results.Append(batch_string.TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+                        rowCountTemp = (int)res.data.Count;
+                        other = res.data;
+                        cursor = "&cursor=" + res.pagination.nextCursor;
+                        //skip_count = skip_count + Globals.ApiBatch;
+                        results.Append(other.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
 
                         rowCount = rowCount + rowCountTemp;
 
                         if (rowCountTemp < Globals.ApiBatch)
-                            Gogo = false;
+                            Gogo_other = false;
+
+                        if (res.pagination.nextCursor == null)
+                            Gogo_other = false;
 
                         formMsg.UpdateMessage("Loading " + selectedObject.ToLower() + " data: " + rowCount.ToString(),
                             eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed");

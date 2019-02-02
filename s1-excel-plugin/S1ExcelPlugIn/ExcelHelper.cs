@@ -93,7 +93,7 @@ namespace S1ExcelPlugIn
             Excel.PivotItems pivotItems = null;
             Excel.Range pivotRange = null;
 
-            Excel.PivotField hiddenPivotField = null;
+            //Excel.PivotField hiddenPivotField = null;
 
             #endregion
 
@@ -288,7 +288,6 @@ namespace S1ExcelPlugIn
                 Globals.PivotBottom = pivotTable.TableRange2.Cells.SpecialCells(Excel.XlCellType.xlCellTypeVisible).Row + pivotTable.TableRange2.Cells.SpecialCells(Excel.XlCellType.xlCellTypeVisible).Rows.Count;
                 Excel.Range rng = (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.get_Range("A" + Globals.PivotBottom.ToString(), "A" + Globals.PivotBottom.ToString());
                 // Globals.ChartBottom = (int)rng.Top + (int)rng.Height;
-
             }
             catch (Exception ex)
             {
@@ -361,8 +360,8 @@ namespace S1ExcelPlugIn
                 chart.ChartTitle.Format.TextFrame2.TextRange.Font.Caps = Microsoft.Office.Core.MsoTextCaps.msoNoCaps;
 
                 chart.ChartArea.Interior.Color = System.Drawing.Color.FromArgb(242, 244, 244); // Change chart to light gray
-                // chart.ChartArea.Interior.Color = System.Drawing.Color.FromRgb(0, 255, 0);
-                // chart.ApplyDataLabels(Excel.XlDataLabelsType.xlDataLabelsShowValue, true, true, true, true, true, true, true, true, true); // Turn on data labels
+                //chart.ChartArea.Interior.Color = System.Drawing.Color.FromRgb(0, 255, 0);
+                //chart.ApplyDataLabels(Excel.XlDataLabelsType.xlDataLabelsShowValue, true, true, true, true, true, true, true, true, true); // Turn on data labels
                 chart.ApplyDataLabels(Excel.XlDataLabelsType.xlDataLabelsShowValue, true, true, true, false, false, true, true, true, true); // Turn on data labels
 
 
@@ -403,7 +402,6 @@ namespace S1ExcelPlugIn
             }
             catch (Exception ex)
             {
-                // ex.Data.Add("ExcelHelper", "Error occurred in the CreateChart() method");
                 ex.Data.Add("ExcelHelper", " Error occurred in the CreateChart() method\r\n" + ex.Message);
                 throw;
             }

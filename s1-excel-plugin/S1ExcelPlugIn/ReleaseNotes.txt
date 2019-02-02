@@ -1,4 +1,7 @@
-﻿Changes in version 2.0.0.0
+﻿Changes in version 3.0.0.0
+- (2019-01-07) Adapting the pluging to fit the API v2.0 (CentralPark/Eifel)
+
+Changes in version 2.0.0.0
 - (2017-09-21)	Too many features to remember
 	- Ability to log in using token, in addition to username/password
 	- Add extracting Application data

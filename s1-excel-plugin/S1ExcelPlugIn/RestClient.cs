@@ -27,21 +27,21 @@ namespace S1ExcelPlugIn
     {
       EndPoint = "";
       Method = HttpVerb.GET;
-      ContentType = "text/xml";
+      ContentType = "application/json";
       PostData = "";
     }
     public RestClientInterface(string endpoint)
     {
       EndPoint = endpoint;
       Method = HttpVerb.GET;
-      ContentType = "text/xml";
+      ContentType = "application/json";
       PostData = "";
     }
     public RestClientInterface(string endpoint, HttpVerb method)
     {
       EndPoint = endpoint;
       Method = method;
-      ContentType = "text/xml";
+      ContentType = "application/json";
       PostData = "";
     }
 
@@ -60,7 +60,7 @@ namespace S1ExcelPlugIn
       return MakeRequest("");
     }
 
-    public string MakeRequest(string parameters)
+    public string MakeRequest(string parameters, bool skip_data_tab = true)
     {
       // ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
       ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(delegate { return true; });
@@ -110,9 +110,14 @@ namespace S1ExcelPlugIn
                             using (var reader = new StreamReader(responseStream))
                             {
                                 responseValue = reader.ReadToEnd();
+                                if (skip_data_tab == true)
+                                {
+                                    dynamic x = Newtonsoft.Json.JsonConvert.DeserializeObject(responseValue);
+                                    dynamic tmp = x.data;
+                                    responseValue = tmp.ToString();
+                                }
                             }
                     }
-
                     return responseValue;
                 }
             }

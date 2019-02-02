@@ -89,22 +89,23 @@ namespace S1ExcelPlugIn
             {
                 if (checkBoxToken.Checked)
                 {
-                    string resourceString = comboBoxURL.Text.TrimEnd('/') + "/web/api/v1.6/threats/summary";
-                    var restClient = new RestClientInterface(
-                        endpoint: resourceString,
-                        method: HttpVerb.GET);
-                    var results = restClient.MakeRequest(textBoxToken.Text);
-                    token = textBoxToken.Text;
-                }
-                else
-                {
-                    string resourceString = comboBoxURL.Text.TrimEnd('/') + "/web/api/v1.6/users/login";
+                    string resourceString = comboBoxURL.Text.TrimEnd('/') + "/web/api/v2.0/users/login/by-api-token";
                     var restClient = new RestClientInterface(
                         endpoint: resourceString,
                         method: HttpVerb.POST,
-                        postData: "{\"username\":\"" + comboBoxUsername.Text + "\", \"password\":\"" + textBoxPassword.Text + "\"}");
+                        postData: "{\"data\": {\"apiToken\":\"" + textBoxToken.Text + "\"} }");
                     var results = restClient.MakeRequest();
-
+                    dynamic x = Newtonsoft.Json.JsonConvert.DeserializeObject(results);
+                    token = x.token;
+                }
+                else
+                {
+                    string resourceString = comboBoxURL.Text.TrimEnd('/') + "/web/api/v2.0/users/login";
+                    var restClient = new RestClientInterface(
+                        endpoint: resourceString,
+                        method: HttpVerb.POST,
+                        postData: "{\"username\":\"" + comboBoxUsername.Text + "\", \"password\":\"" + textBoxPassword.Text + "\", \"remember_me\":\"true\"}");
+                    var results = restClient.MakeRequest();
                     dynamic x = Newtonsoft.Json.JsonConvert.DeserializeObject(results);
                     token = x.token;
                 }
@@ -204,6 +205,7 @@ namespace S1ExcelPlugIn
                     crypto.SetSettings("ExcelPlugIn", "UseToken", checkBoxToken.Checked.ToString());
 
                     crypto.SetSettings("ExcelPlugIn\\Credentials", credName, crypto.Encrypt(credValue));
+
                 }
             }
             catch (Exception ex)

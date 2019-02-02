@@ -181,12 +181,10 @@ namespace S1ExcelPlugIn
                 formMsg.StopProcessing = false;
                 formMsg.Message("Loading application data: " + rowCount.ToString("N0"),
                         eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed", allowCancel: true);
-
                 for (int i = 1; i <= AgentArrayItems; i++)
                 {
-                    resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i,1).ToString() + "/applications";
+                    resourceString = mgmtServer + "/web/api/v2.0/agents/applications?ids=" + AgentArray.GetValue(i, 1).ToString();
                     // resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + "/passphrase";
-
                     Globals.ApiUrl = resourceString;
                     restClient.EndPoint = resourceString;
                     restClient.Method = HttpVerb.GET;

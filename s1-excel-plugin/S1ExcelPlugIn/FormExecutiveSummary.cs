@@ -54,10 +54,11 @@ namespace S1ExcelPlugIn
                 userName = crypto.GetSettings("ExcelPlugIn", "Username");
 
                 // Agent Summary ==========================================================================================================
-                string resourceString = mgmtServer + "/web/api/v1.6/agents/count-by-filters?participating_fields=" +
-                    "software_information__os_type,software_information__os_arch,hardware_information__machine_type," +
-                    "network_information__domain,network_status,configuration__learning_mode,is_pending_uninstall," +
-                    "is_up_to_date,infected,policy_id,is_active";
+                string resourceString = mgmtServer + "/web/api/v2.0/private/agents/filters-count";
+                //string resourceString = mgmtServer + "/web/api/v2.0/private/agents/filter-count?participating_fields=" +
+                //    "software_information__os_type,software_information__os_arch,hardware_information__machine_type," +
+                //    "network_information__domain,network_status,configuration__learning_mode,is_pending_uninstall," +
+                //    "is_up_to_date,infected,policy_id,is_active";
                 var restClient = new RestClientInterface(resourceString);
                 restClient.EndPoint = resourceString;
                 restClient.Method = HttpVerb.GET;
@@ -71,15 +72,49 @@ namespace S1ExcelPlugIn
 
                 // webBrowserExecutiveSummary.DocumentText = "<html><body>" + results + "</body></html>";
 
-                string AgentsInstalled = agent_summary.total_count.ToString();
+                string Connected = "";
+                string Disconnected = "";
+                string IsActiveTrue = "";
+                string IsActiveFalse = "";
+
+                foreach (var item in agent_summary)
+                {
+                    if (item["key"] == "networkStatuses")
+                    {
+                        foreach (var sub_item in item["values"])
+                        {
+                            if (sub_item["title"] == "Connected")
+                            {
+                                Connected = sub_item["count"].ToString();
+                            }
+                            if (sub_item["title"] == "Disconnected")
+                            {
+                                Disconnected = sub_item["count"].ToString();
+                            }
+                        }
+                    }
+                    if (item["key"] == "isActive")
+                    {
+                        foreach (var sub_item in item["values"])
+                        {
+                            if (sub_item["title"] == "Yes")
+                            {
+                                IsActiveTrue = sub_item["count"].ToString();
+                            }
+                            if (sub_item["title"] == "No")
+                            {
+                                IsActiveFalse = sub_item["count"].ToString();
+                            }
+                        }
+
+                    }
+                }
+
+                string AgentsInstalled = (Convert.ToInt32(Connected) + Convert.ToInt32(Disconnected)).ToString();
                 string AgentsIntalledFormatted = string.Format("{0:n0}", Convert.ToInt32(AgentsInstalled));
 
-                string Connected = agent_summary.network_status.connected == null ? "0" : agent_summary.network_status.connected.ToString();
-                string Disconnected = agent_summary.network_status.disconnected == null ? "0" : agent_summary.network_status.disconnected.ToString();
                 int PercentConnected = (int)Math.Round((double)(100 * Convert.ToInt32(Connected)) / (Convert.ToInt32(Disconnected) + Convert.ToInt32(Connected)));
 
-                string IsActiveTrue = agent_summary.is_active["true"] == null ? "0" : agent_summary.is_active["true"].ToString();
-                string IsActiveFalse = agent_summary.is_active["false"] == null ? "0" : agent_summary.is_active["false"].ToString();
                 // MessageBox.Show(IsActiveTrue + " - " + IsActiveFalse);
                 int PercentActive = (int)Math.Round((double)(100 * Convert.ToInt32(IsActiveTrue)) / (Convert.ToInt32(IsActiveTrue) + Convert.ToInt32(IsActiveFalse)));
 
@@ -159,7 +194,7 @@ namespace S1ExcelPlugIn
                 #endregion
 
                 // Threat Summary ================================================================================================================
-                resourceString = mgmtServer + "/web/api/v1.6/threats/summary";
+                resourceString = mgmtServer + "/web/api/v2.0/private/threats/summary";
                 restClient = new RestClientInterface(resourceString);
                 restClient.EndPoint = resourceString;
                 restClient.Method = HttpVerb.GET;
@@ -176,7 +211,6 @@ namespace S1ExcelPlugIn
                 report = report.Replace("$AT$", string.Format("{0:n0}", Convert.ToInt32(Globals.ActiveThreats)));
                 report = report.Replace("$AUT$", string.Format("{0:n0}", Convert.ToInt32(Globals.ActiveAndUnresolvedThreats)));
                 report = report.Replace("$UnresolvedThreatOnly$", Globals.UnresolvedThreatOnly.ToString().ToLower());
-
                 File.WriteAllText(localTarget, report);
 
                 HTMLAttachment = localTarget;

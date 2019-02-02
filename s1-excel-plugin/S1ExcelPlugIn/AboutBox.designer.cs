@@ -90,6 +90,7 @@ namespace AboutBoxDemo
             // 
             this.AppCopyrightLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.AppCopyrightLabel.ForeColor = System.Drawing.SystemColors.ControlText;
             this.AppCopyrightLabel.Location = new System.Drawing.Point(6, 99);
             this.AppCopyrightLabel.Name = "AppCopyrightLabel";
             this.AppCopyrightLabel.Size = new System.Drawing.Size(380, 16);

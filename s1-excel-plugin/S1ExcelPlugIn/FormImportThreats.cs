@@ -231,8 +231,8 @@ namespace S1ExcelPlugIn
                 }
                 else
                 {
-                    created_at__gte = "created_at__gte=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerStart.Value).ToString();
-                    created_at__lte = "created_at__lte=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerEnd.Value.AddDays(1)).ToString();
+                    created_at__gte = "createdAt__gt=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerStart.Value).ToString();
+                    created_at__lte = "createdAt__lt=" + eHelper.DateTimeToUnixTimestamp(dateTimePickerEnd.Value.AddDays(1)).ToString();
                     daterange = "&" + created_at__lte + "&" + created_at__gte;
                 }
 
@@ -277,10 +277,11 @@ namespace S1ExcelPlugIn
 
                 while (Gogo)
                 {
-                    resourceString = mgmtServer + "/web/api/v1.6/threats?" + limit + skip + skip_count.ToString() + daterange + resolved;
+                    resourceString = mgmtServer + "/web/api/v2.0/threats?" + limit + skip + skip_count.ToString() + daterange + resolved;
                     restClient.EndPoint = resourceString;
                     restClient.Method = HttpVerb.GET;
-                    var batch_string = restClient.MakeRequest(token).ToString();
+                    var batch_string = restClient.MakeRequest(token, true).ToString();
+
                     threats = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
                     rowCountTemp = (int)threats.Count;
                     skip_count = skip_count + BatchRecords;
@@ -494,14 +495,14 @@ namespace S1ExcelPlugIn
                         switch (header0)
                         {
                             #region mitigation_status
-                            case "mitigation_status":
+                            case "mitigationStatus":
                                 {
                                     switch ((string)temp)
                                     {
-                                        case "0":
+                                        case "mitigated":
                                             temp = "Mitigated";
                                             break;
-                                        case "1":
+                                        case "active":
                                             temp = "Active";
                                             ActiveThreat = true;
                                             if (UnresolvedThreat)
@@ -509,17 +510,17 @@ namespace S1ExcelPlugIn
                                                 UnresolvedActive++;
                                             }
                                             break;
-                                        case "2":
+                                        case "blocked":
                                             temp = "Blocked";
                                             break;
-                                        case "3":
+                                        case "suspicious":
                                             temp = "Suspicious";
                                             break;
-                                        case "4":
+                                        case "pending":
                                             temp = "Pending";
                                             break;
-                                        case "5":
-                                            temp = "Suspicious cancelled";
+                                        case "suspicious_resolved":
+                                            temp = "Suspicious resolved";
                                             break;
                                         default:
                                             temp = "Mitigated";
@@ -626,7 +627,7 @@ namespace S1ExcelPlugIn
 
                         dataBlock[i, j] = temp;
                     }
-                } 
+                }
 
                 Globals.ActiveAndUnresolvedThreats = UnresolvedActive.ToString();
 
@@ -821,33 +822,34 @@ namespace S1ExcelPlugIn
                 // Set the Pivot Fields
                 pivotFields = (Excel.PivotFields)pivotTable.PivotFields();
                 // Month Pivot Field
-                monthPivotField = (Excel.PivotField)pivotFields.Item("Created Date");
+                monthPivotField = (Excel.PivotField)pivotFields.Item("Createddate");
                 monthPivotField.Orientation = Excel.XlPivotFieldOrientation.xlRowField;
                 monthPivotField.Position = 1;
                 monthPivotField.DataRange.Cells[1].Group(true, true, Type.Missing, new bool[] { false, false, false, false, true, true, true });
                 pivotTable.CompactLayoutRowHeader = "Date Range";
                 pivotTable.CompactLayoutColumnHeader = "Mitigation Status";
                 // Mitigation Status Pivot Field
-                statusPivotField = (Excel.PivotField)pivotFields.Item("Mitigation Status");
+                statusPivotField = (Excel.PivotField)pivotFields.Item("Mitigationstatus");
                 statusPivotField.Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
                 // Resolved Pivot Field
                 resolvedPivotField = (Excel.PivotField)pivotFields.Item("Resolved");
                 resolvedPivotField.Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+                // No longer present in v2.0
                 // Group Pivot Field
-                groupPivotField = (Excel.PivotField)pivotFields.Item("Group Name");
-                groupPivotField.Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+                //groupPivotField = (Excel.PivotField)pivotFields.Item("Group Name");
+                //groupPivotField.Orientation = Excel.XlPivotFieldOrientation.xlPageField;
                 // Threat ID Pivot Field
                 threatIdPivotField = (Excel.PivotField)pivotFields.Item("ID");
                 // Count of Threat ID Field
                 threatIdCountPivotField = pivotTable.AddDataField(threatIdPivotField, "# of Threats", Excel.XlConsolidationFunction.xlCount);
                 slicerCaches = activeWorkBook.SlicerCaches;
                 // Month Slicer
-                monthSlicerCache = slicerCaches.Add(pivotTable, "Created Date", "CreatedDate");
+                monthSlicerCache = slicerCaches.Add(pivotTable, "Createddate", "CreatedDate");
                 monthSlicers = monthSlicerCache.Slicers;
                 // monthSlicer = monthSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Created Date", "Created Date", 60, 10, 144, 100);
                 monthSlicer = monthSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Created Date", "Created Date", 60, 10, 85, 100);
                 // Mitigation Status Slicer
-                statusSlicerCache = slicerCaches.Add(pivotTable, "Mitigation Status", "MitigationStatus");
+                statusSlicerCache = slicerCaches.Add(pivotTable, "Mitigationstatus", "MitigationStatus");
                 statusSlicers = statusSlicerCache.Slicers;
                 // statusSlicer = statusSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Mitigation Status", "Mitigation Status", 60, 164, 144, 100);
                 statusSlicer = statusSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Mitigation Status", "Mitigation Status", 60, 105, 105, 100);
@@ -856,10 +858,11 @@ namespace S1ExcelPlugIn
                 resolvedSlicers = resolvedSlicerCache.Slicers;
                 // resolvedSlicer = resolvedSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Resolved", "Resolved", 60, 318, 144, 100);
                 resolvedSlicer = resolvedSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Resolved", "Resolved", 60, 220, 85, 100);
+                // No longer present in v2.0
                 // Group Slicer
-                groupSlicerCache = slicerCaches.Add(pivotTable, "Group Name", "GroupName");
-                groupSlicers = groupSlicerCache.Slicers;
-                groupSlicer = groupSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Group Name", "Group Name", 60, 315, 145, 100);
+                //groupSlicerCache = slicerCaches.Add(pivotTable, "Group Name", "GroupName");
+                //groupSlicers = groupSlicerCache.Slicers;
+                //groupSlicer = groupSlicers.Add((ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.ActiveSheet, Type.Missing, "Group Name", "Group Name", 60, 315, 145, 100);
 
                 int iTotalColumns = pivotWorkSheet.UsedRange.Columns.Count + 9;
                 int iTotalRows = pivotWorkSheet.UsedRange.Rows.Count;
@@ -1100,7 +1103,7 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableClassifier", "Detection Engine", "Detection Engine", "Resolved", "Detection Count");
+                                    "PivotTableClassifier", "Engines", "Detection Engine", "Resolved", "Detection Count");
                 eHelper.CreateChart("PivotTableClassifier", NextChartOffet, "SentinelOne Detection Engines");
                 #endregion
 
@@ -1135,7 +1138,7 @@ namespace S1ExcelPlugIn
                 }
 
                 eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableFileDisplayName", "File Id.Display Name", "File Id.Display Name", "Resolved", "Incident Count");
+                                    "PivotTableFileDisplayName", "Filedisplayname", "File Id.Display Name", "Resolved", "Incident Count");
                 eHelper.CreateChart("PivotTableFileDisplayName", NextChartOffet, "Most Convicted Files");
                 #endregion
 
@@ -1169,7 +1172,7 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableAtRiskUsers", "User Name", "User Name", "Resolved", "Incident Count");
+                                    "PivotTableAtRiskUsers", "Username", "User Name", "Resolved", "Incident Count");
                 eHelper.CreateChart("PivotTableAtRiskUsers", NextChartOffet, "Most At-Risk Users");
                 #endregion
 
@@ -1203,42 +1206,43 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableAtRiskEndpoints", "Agent Name", "Agent Name", "Resolved", "Incident Count");
+                                    "PivotTableAtRiskEndpoints", "Agentcomputername", "Agent Name", "Resolved", "Incident Count");
                 eHelper.CreateChart("PivotTableAtRiskEndpoints", NextChartOffet, "Most At-Risk Endpoints");
                 #endregion
 
-                #region At Risk Groups
+                //#region At Risk Groups
+                // Groups are not used anymore in v2.0
                 // Most at-risk groups ====================================================================================================================
-                NextPivotRowDefault = NextPivotRowDefault + 15;
-                NextChartOffsetDefault = NextChartOffsetDefault + 225;
-                NextChartOffet = NextChartOffsetDefault;
-                NextPivotRow = Globals.PivotBottom + 1;
-                rng = (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.get_Range("A" + NextPivotRow.ToString(), "A" + NextPivotRow.ToString());
+                //NextPivotRowDefault = NextPivotRowDefault + 15;
+                //NextChartOffsetDefault = NextChartOffsetDefault + 225;
+                //NextChartOffet = NextChartOffsetDefault;
+                //NextPivotRow = Globals.PivotBottom + 1;
+                //rng = (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.get_Range("A" + NextPivotRow.ToString(), "A" + NextPivotRow.ToString());
 
-                if (Globals.PivotBottom >= NextPivotRowDefault && Globals.ChartBottom < NextChartOffsetDefault)
-                {
-                    Globals.ChartBottom = (int)rng.Top;
-                    NextChartOffet = Globals.ChartBottom;
-                }
-                else if (Globals.ChartBottom >= NextChartOffsetDefault)
-                {
-                    NextPivotRow = Globals.PivotBottom + 1;
-                    bool doMore = true;
-                    while (doMore)
-                    {
-                        rng = (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.get_Range("A" + NextPivotRow.ToString(), "A" + NextPivotRow.ToString());
-                        if (Globals.ChartBottom > rng.Top) NextPivotRow++;
-                        else { doMore = false; }
-                    }
-                    NextChartOffet = (int)rng.Top;
-                }
-                else
-                    NextPivotRow = NextPivotRowDefault;
+                //if (Globals.PivotBottom >= NextPivotRowDefault && Globals.ChartBottom < NextChartOffsetDefault)
+                //{
+                //    Globals.ChartBottom = (int)rng.Top;
+                //    NextChartOffet = Globals.ChartBottom;
+                //}
+                //else if (Globals.ChartBottom >= NextChartOffsetDefault)
+                //{
+                //    NextPivotRow = Globals.PivotBottom + 1;
+                //    bool doMore = true;
+                //    while (doMore)
+                //    {
+                //        rng = (ADXAddinModule.CurrentInstance as AddinModule).ExcelApp.get_Range("A" + NextPivotRow.ToString(), "A" + NextPivotRow.ToString());
+                //        if (Globals.ChartBottom > rng.Top) NextPivotRow++;
+                //        else { doMore = false; }
+                //    }
+                //    NextChartOffet = (int)rng.Top;
+                //}
+                //else
+                //    NextPivotRow = NextPivotRowDefault;
 
-                eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableAtRiskGroups", "Group Name", "Group Name", "Resolved", "Incident Count");
-                eHelper.CreateChart("PivotTableAtRiskGroups", NextChartOffet, "Most At-Risk Groups");
-                #endregion
+                //eHelper.CreatePivot("Threat Data", colCount, rowCount, "'Threat Reports'!R" + NextPivotRow.ToString() + "C11", 
+                //                    "PivotTableAtRiskGroups", "Group Name", "Group Name", "Resolved", "Incident Count");
+                //eHelper.CreateChart("PivotTableAtRiskGroups", NextChartOffet, "Most At-Risk Groups");
+                //#endregion
 
 
                 // Cursor placement ===================================================================
