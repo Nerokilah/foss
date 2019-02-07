@@ -361,11 +361,6 @@ namespace S1ExcelPlugIn
                         rowCountTemp = (int)res.data.Count;
                         reports = res.data;
                         cursor = "&cursor=" + res.pagination.nextCursor;
-                        string path = @"C:\Users\Public\WriteLines.txt";
-                        using (StreamWriter sw = File.AppendText(path))
-                        {
-                            sw.WriteLine(cursor);
-                        }
                         //skip_count = skip_count + Globals.ApiBatch;
                         results.Append(reports.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
 

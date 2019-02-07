@@ -792,7 +792,7 @@ namespace S1ExcelPlugIn
                     NextPivotRow = NextPivotRowDefault;
 
                 eHelper.CreatePivot("Agent Data", colCount, rowCount, "'Agent Reports'!R" + NextPivotRow.ToString() + "C11", 
-                                    "PivotTableGroupName", "Group Name", "Group Name", "ID", "Group Count");
+                                    "PivotTableGroupName", "Groupname", "Groupname", "ID", "Group Count");
                 eHelper.CreateChart("PivotTableGroupName", NextChartOffet, "Groups with Most Agents");
 
             }
