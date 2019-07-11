@@ -60,7 +60,8 @@ namespace S1ExcelPlugIn
                     else
                     {
                         checkBoxToken.Checked = true;
-                        textBoxToken.Text = crypto.Decrypt(crypto.GetSettings("ExcelPlugIn", "Token"));
+                        textBoxToken.Text = crypto.Decrypt(crypto.GetSettings("ExcelPlugIn", "APIToken"));
+                        //textBoxToken.Text = crypto.Decrypt(crypto.GetSettings("ExcelPlugIn", "Token"));
                         comboBoxUsername.Enabled = false;
                         textBoxPassword.Enabled = false;
                         textBoxToken.Enabled = true;
@@ -181,12 +182,13 @@ namespace S1ExcelPlugIn
                     string credName = "";
                     string credValue = "";
                     credName = comboBoxURL.Text + "||" + "Token";
-                    credValue = "not_relevant" + "||" + token;
+                    credValue = "not_relevant" + "||" + textBoxToken.Text;
 
                     crypto.SetSettings("ExcelPlugIn", "ManagementServer", comboBoxURL.Text);
                     crypto.SetSettings("ExcelPlugIn", "Username", "Token");
                     crypto.SetSettings("ExcelPlugIn", "Password", crypto.Encrypt("not_relevant"));
                     crypto.SetSettings("ExcelPlugIn", "Token", crypto.Encrypt(token));
+                    crypto.SetSettings("ExcelPlugIn", "APIToken", crypto.Encrypt(textBoxToken.Text));
                     crypto.SetSettings("ExcelPlugIn", "UseToken", checkBoxToken.Checked.ToString());
 
                     crypto.SetSettings("ExcelPlugIn\\Credentials", credName, crypto.Encrypt(credValue));

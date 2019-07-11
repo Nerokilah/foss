@@ -50,8 +50,8 @@ namespace S1ExcelPlugIn
       EndPoint = endpoint;
       Method = method;
         // ContentType = "text/xml";
-        ContentType = "application/json";
-        PostData = postData;
+      ContentType = "application/json";
+      PostData = postData;
     }
 
 
@@ -96,7 +96,6 @@ namespace S1ExcelPlugIn
                 using (var response = (HttpWebResponse)request.GetResponse())
                 {
                     var responseValue = string.Empty;
-
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
                         var message = String.Format("Request failed. Received HTTP {0}", response.StatusCode);
