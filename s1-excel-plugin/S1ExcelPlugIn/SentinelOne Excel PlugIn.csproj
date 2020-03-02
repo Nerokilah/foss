@@ -18,8 +18,8 @@
     </UpgradeBackupLocation>
     <StartupObject>
     </StartupObject>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>sign.pfx</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>Strong.pfx</AssemblyOriginatorKeyFile>
     <IsWebBootstrapper>true</IsWebBootstrapper>
     <ApplicationIcon>Excel.ico</ApplicationIcon>
     <PublishUrl>http://localhost/BigFixExcelAddIn/</PublishUrl>
@@ -307,6 +307,7 @@
     </None>
     <None Include="S1ExcelPlugIn.pfx" />
     <None Include="sign.pfx" />
+    <None Include="Strong.pfx" />
     <None Include="Wizard\wizBigOnlineFolder.gif" />
     <EmbeddedResource Include="FormAPI.resx">
       <DependentUpon>FormAPI.cs</DependentUpon>

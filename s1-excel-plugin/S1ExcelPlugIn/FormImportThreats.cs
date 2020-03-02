@@ -11,7 +11,7 @@ using System.Collections;
 using System.Globalization;
 using System.Diagnostics;
 using System.Threading.Tasks;
-
+using System.Text;
 
 namespace S1ExcelPlugIn
 {
@@ -252,9 +252,12 @@ namespace S1ExcelPlugIn
                 bool Gogo = true;
                 string skip = "&skip=";
                 int skip_count = 0;
-                string results = "";
+                //string results = "";
+                StringBuilder results = new StringBuilder("[");
                 int maxColumnWidth = 80;
+                dynamic threatsIterate = "";
                 dynamic threats = "";
+                dynamic cursor = "";
                 int rowCountTemp = 0;
                 string resourceString = "";
 
@@ -277,17 +280,24 @@ namespace S1ExcelPlugIn
 
                 while (Gogo)
                 {
-                    resourceString = mgmtServer + "/web/api/v2.0/threats?" + limit + skip + skip_count.ToString() + daterange + resolved;
+                    resourceString = mgmtServer + "/web/api/v2.0/threats?" + limit + cursor + daterange + resolved;
                     restClient.EndPoint = resourceString;
                     restClient.Method = HttpVerb.GET;
-                    var batch_string = restClient.MakeRequest(token, true).ToString();
+                    var batch_string = restClient.MakeRequest(token, false).ToString();
 
-                    threats = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
-                    rowCountTemp = (int)threats.Count;
-                    skip_count = skip_count + BatchRecords;
-                    results = results + ", " + batch_string.TrimStart('[').TrimEnd(']', '\r', '\n');
+                    threatsIterate = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                    threats = threatsIterate.data;
+                    rowCountTemp = (int)threatsIterate.data.Count;
+                    cursor = "&cursor=" + threatsIterate.pagination.nextCursor;
+                    //skip_count = skip_count + BatchRecords;
+
+                    //results = results + ", " + threats.ToString().TrimStart('[').TrimEnd(']', '\r', '\n');
+                    results.Append(threats.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
 
                     rowCount = rowCount + rowCountTemp;
+
+                    if (threatsIterate.pagination.nextCursor == null)
+                        Gogo = false;
 
                     if (rowCountTemp < BatchRecords || rowCount >= MaxRecords)
                         Gogo = false;
@@ -313,13 +323,18 @@ namespace S1ExcelPlugIn
 
                 Globals.ApiUrl = resourceString;
                 Globals.TotalThreats = rowCount;
-                results = "[" + results.TrimStart(',').TrimEnd(',', ' ') + "]";
-                threats = Newtonsoft.Json.JsonConvert.DeserializeObject(results, JsonSettings);
+
+
+                //results = "[" + results.TrimStart(',').TrimEnd(',', ' ') + "]";
+                results.Length--;
+                results.Append("]");
+
+                threats = Newtonsoft.Json.JsonConvert.DeserializeObject(results.ToString(), JsonSettings);
 
                 #endregion
 
                 #region Parse attribute headers
-                JArray ja = JArray.Parse(results);
+                JArray ja = JArray.Parse(results.ToString());
                 // Stop processing if no data found
                 if (ja.Count == 0)
                 {

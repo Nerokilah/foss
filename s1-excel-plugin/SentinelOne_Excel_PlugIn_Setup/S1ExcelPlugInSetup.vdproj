@@ -316,13 +316,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_51A5EFDB_519C_4580_BA95_08014238F920"
+        "OwnerKey" = "8:_1586F48933DE429EBF2599DD0810CA1E"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_1586F48933DE429EBF2599DD0810CA1E"
+        "OwnerKey" = "8:_51A5EFDB_519C_4580_BA95_08014238F920"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -808,7 +808,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Owf.Controls.A1Panel, Version=1.0.7131.23116, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Owf.Controls.A1Panel, Version=1.0.7248.36433, Culture=neutral, PublicKeyToken=da8881eadd24108b, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_90AF009C8DB81B8E0BA316C62B5D8F78"
@@ -1176,9 +1176,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:SentinelOne Excel PlugIn 3.1"
+        "ProductName" = "8:SentinelOne Excel PlugIn 3.2"
         "ProductCode" = "8:{4F3F0931-38B6-4287-8B62-81827E5D4603}"
-        "PackageCode" = "8:{EA3925A5-D454-4D4B-B559-020DF3DB5CF8}"
+        "PackageCode" = "8:{2C25501C-AD32-44EE-AF2A-9C38902221BF}"
         "UpgradeCode" = "8:{BABA5209-A817-4B4A-8225-385E8722F59B}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -1189,7 +1189,7 @@
         "Manufacturer" = "8:SentinelOne"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:SentinelOne Excel PlugIn 3.1 Setup"
+        "Title" = "8:SentinelOne Excel PlugIn 3.2 Setup"
         "Subject" = "8:"
         "ARPCONTACT" = "8:Willy Poddevin"
         "Keywords" = "8:"

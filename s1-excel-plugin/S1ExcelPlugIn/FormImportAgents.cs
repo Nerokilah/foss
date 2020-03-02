@@ -217,7 +217,9 @@ namespace S1ExcelPlugIn
                         resourceString = mgmtServer + "/web/api/v2.0/agents?" + limit + cursor + query;
                         restClient.EndPoint = resourceString;
                         restClient.Method = HttpVerb.GET;
+
                         var res = restClient.MakeRequest(token, false).ToString();
+
                         agentsIterate = Newtonsoft.Json.JsonConvert.DeserializeObject(res, JsonSettings);
                         rowCountTemp = (int)agentsIterate.data.Count;
                         agents = agentsIterate.data;
