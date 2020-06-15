@@ -54,7 +54,7 @@ namespace S1ExcelPlugIn
                 userName = crypto.GetSettings("ExcelPlugIn", "Username");
 
                 // Agent Summary ==========================================================================================================
-                string resourceString = mgmtServer + "/web/api/v2.0/private/agents/filters-count";
+                string resourceString = mgmtServer + "/web/api/v2.1/private/agents/filters-count";
                 //string resourceString = mgmtServer + "/web/api/v2.0/private/agents/filter-count?participating_fields=" +
                 //    "software_information__os_type,software_information__os_arch,hardware_information__machine_type," +
                 //    "network_information__domain,network_status,configuration__learning_mode,is_pending_uninstall," +
@@ -194,24 +194,35 @@ namespace S1ExcelPlugIn
                 #endregion
 
                 // Threat Summary ================================================================================================================
-                resourceString = mgmtServer + "/web/api/v2.0/private/threats/summary";
+                resourceString = mgmtServer + "/web/api/v2.1/private/threats/summary";
                 restClient = new RestClientInterface(resourceString);
                 restClient.EndPoint = resourceString;
                 restClient.Method = HttpVerb.GET;
                 var resultsThreats = restClient.MakeRequest(token).ToString();
                 dynamic threat_summary = Newtonsoft.Json.JsonConvert.DeserializeObject(resultsThreats, JsonSettings);
+                MessageBox.Show("Test");
 
                 string ActiveThreats = threat_summary.active.ToString();
+                MessageBox.Show("Test");
                 string MitigatedThreats = threat_summary.mitigated.ToString();
+                MessageBox.Show("Test");
                 string SuspiciousThreats = threat_summary.suspicious.ToString();
+                MessageBox.Show("Test");
                 string BloackedThreats = threat_summary.blocked.ToString();
+                MessageBox.Show("Test");
 
                 report = report.Replace("$TT$", string.Format("{0:n0}", Convert.ToInt32(Globals.TotalThreats)));
+                MessageBox.Show("Test");
                 if (Globals.ActiveThreats == "") Globals.ActiveThreats = "0";
+                MessageBox.Show("Test");
                 report = report.Replace("$AT$", string.Format("{0:n0}", Convert.ToInt32(Globals.ActiveThreats)));
+                MessageBox.Show("Test");
                 report = report.Replace("$AUT$", string.Format("{0:n0}", Convert.ToInt32(Globals.ActiveAndUnresolvedThreats)));
+                MessageBox.Show("Test");
                 report = report.Replace("$UnresolvedThreatOnly$", Globals.UnresolvedThreatOnly.ToString().ToLower());
+                MessageBox.Show("Test");
                 File.WriteAllText(localTarget, report);
+                MessageBox.Show("Test");
 
                 HTMLAttachment = localTarget;
 

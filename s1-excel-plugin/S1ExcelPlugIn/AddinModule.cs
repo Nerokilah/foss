@@ -1469,10 +1469,10 @@ namespace S1ExcelPlugIn
         public static int AgentRowCount = 0;
         public static bool UnresolvedThreatOnly = false;
 
-        public static int ApiBatch = 100;
-        public static int PassphraseBatch = 50;
-        public static int ApplicationBatch = 20;
-        public static int ProcessBatch = 20;
+        public static int ApiBatch = 1000;
+        public static int PassphraseBatch = 100;
+        public static int ApplicationBatch = 100;
+        public static int ProcessBatch = 100;
 
         public static string ApiUrl = "No API calls submitted";
         public static string ApiResults = "No API data available";

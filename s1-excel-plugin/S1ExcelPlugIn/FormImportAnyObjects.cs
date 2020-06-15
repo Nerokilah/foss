@@ -205,59 +205,87 @@ namespace S1ExcelPlugIn
                     int UpdateInterval = Globals.PassphraseBatch;
                     #endregion
 
-                    for (int i = 1; i <= AgentArrayItems; i++)
-                    {
-                        // resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + "/passphrase";
-                        // resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + selectedObject.ToLower().Substring(selectedObject.IndexOf("/"));
-                        resourceString = mgmtServer + "/web/api/v2.0/agents/passphrases";
-                        restClient.EndPoint = resourceString;
-                        restClient.Method = HttpVerb.GET;
-                        var batch_string = restClient.MakeRequest(token).ToString();
-                        //batch_string = batch_string.Replace("\"configuration\": \"", "\"configuration\": ");
-                        //batch_string = batch_string.Replace("\\\"", "\"");
-                        //batch_string = batch_string.Replace("\\\\\\\\", "\\\\");
-                        //batch_string = batch_string.Replace("}\", \"updated_at\"", "}, \"updated_at\"");
+                    ////for (int i = 1; i <= AgentArrayItems; i++)
+                    ////{
+                        //// resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + "/passphrase";
+                        //// resourceString = mgmtServer + "/web/api/v1.6/agents/" + AgentArray.GetValue(i, 1).ToString() + selectedObject.ToLower().Substring(selectedObject.IndexOf("/"));
+                        //resourceString = mgmtServer + "/web/api/v2.0/agents/passphrases";
+                        //restClient.EndPoint = resourceString;
+                        //restClient.Method = HttpVerb.GET;
+                        //var batch_string = restClient.MakeRequest(token).ToString();
 
-                        int percentComplete = 0;
-
-                        if (i % UpdateInterval == 0)
+                        bool Gogo = true;
+                        dynamic passphrases = "";
+                        while (Gogo)
                         {
-                            percentComplete = (int)Math.Round((double)(100 * i) / AgentArrayItems);
-                            formMsg.UpdateMessage("Collecting " + selectedObject.ToLower().Substring(selectedObject.IndexOf("/") + 1) + " from " + i.ToString("N0") + " of " + AgentArrayItems.ToString("N0") + " agents (" + percentComplete.ToString() + "%)...",
+                            resourceString = mgmtServer + "/web/api/v2.0/agents/passphrases" + "?" + limit + cursor;
+                            restClient.EndPoint = resourceString;
+                            restClient.Method = HttpVerb.GET;
+                            var batch_string = restClient.MakeRequest(token, false).ToString();
+                            res = Newtonsoft.Json.JsonConvert.DeserializeObject(batch_string, JsonSettings);
+                            rowCountTemp = (int)res.data.Count;
+                            passphrases = res.data;
+                            cursor = "&cursor=" + res.pagination.nextCursor;
+                            //skip_count = skip_count + Globals.ApiBatch;
+                            results.Append(passphrases.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+
+                            rowCount = rowCount + rowCountTemp;
+
+                            if (rowCountTemp < Globals.ApiBatch)
+                                Gogo = false;
+
+                            if (res.pagination.nextCursor == null)
+                                Gogo = false;
+
+                            formMsg.UpdateMessage("Loading " + selectedObject.ToLower() + " data: " + rowCount.ToString(),
                                 eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed");
+
                             if (formMsg.StopProcessing == true)
                             {
                                 formMsg.Hide();
                                 return;
                             }
                         }
-                        //MessageBox.Show("Test");
-                        //JObject oneAgent = JObject.Parse(batch_string);
 
-                        //var PropertyComputerName = new JProperty("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
-                        //MessageBox.Show("Test");
-                        //var PropertyOperatingSystem = new JProperty("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
-                        //MessageBox.Show("Test");
 
-                        //oneAgent.AddFirst(PropertyOperatingSystem);
-                        //MessageBox.Show("Test");
-                        //oneAgent.AddFirst(PropertyComputerName);
-                        //MessageBox.Show("Test");
 
-                        //// oneAgent.Add("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
-                        //// oneAgent.Add("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
+                        ////batch_string = batch_string.Replace("\"configuration\": \"", "\"configuration\": ");
+                        ////batch_string = batch_string.Replace("\\\"", "\"");
+                        ////batch_string = batch_string.Replace("\\\\\\\\", "\\\\");
+                        ////batch_string = batch_string.Replace("}\", \"updated_at\"", "}, \"updated_at\"");
 
-                        //results.Append(oneAgent.ToString()).Append(",");
-                        //MessageBox.Show("Test");
-                        //rowCount++;
-                        //MessageBox.Show("Test");
+                        ////int percentComplete = 0;
 
-                        results.Append(batch_string.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
+                        ////if (i % UpdateInterval == 0)
+                        ////{
+                        ////    percentComplete = (int)Math.Round((double)(100 * i) / AgentArrayItems);
+                        ////    formMsg.UpdateMessage("Collecting " + selectedObject.ToLower().Substring(selectedObject.IndexOf("/") + 1) + " from " + i.ToString("N0") + " of " + AgentArrayItems.ToString("N0") + " agents (" + percentComplete.ToString() + "%)...",
+                        ////        eHelper.ToReadableStringUpToSec(stopWatch.Elapsed) + " elapsed");
+                        ////    if (formMsg.StopProcessing == true)
+                        ////    {
+                        ////        formMsg.Hide();
+                        ////        return;
+                        ////    }
+                        ////}
+                        ////JObject oneAgent = JObject.Parse(batch_string);
+
+                        ////var PropertyComputerName = new JProperty("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
+                        ////var PropertyOperatingSystem = new JProperty("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
+
+                        ////oneAgent.AddFirst(PropertyOperatingSystem);
+                        ////oneAgent.AddFirst(PropertyComputerName);
+
+                        ////// oneAgent.Add("operating_system", AgentArray.GetValue(i, 3) == null ? "N/A" : AgentArray.GetValue(i, 3).ToString());
+                        ////// oneAgent.Add("computer_name", AgentArray.GetValue(i, 2) == null ? "N/A" : AgentArray.GetValue(i, 2).ToString());
+
+                        ////results.Append(oneAgent.ToString()).Append(",");
+                        ////rowCount++;
+
+                        //results.Append(batch_string.ToString().TrimStart('[').TrimEnd(']', '\r', '\n')).Append(",");
                         rowCount++;
                     }
 
-                    // MessageBox.Show(results.ToString());
-                }
+                ////}
                 #endregion
 
                 #region Groups
